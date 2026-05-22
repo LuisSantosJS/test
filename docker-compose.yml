@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  wp-datalitics:
+    image: dataliticsapp/wp-datalitics:latest
+    container_name: wp-datalitics
+    restart: on-failure
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - API_URL=https://api.datalitics.com.br
+      - API_WP=https://api-whatsapp.datalitics.com.br
+      - EVO_MANAGER_API=https://evo-manager-prod.datalitics.app
+    networks:
+      - externa
+      - interna
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=externa"
+      - "traefik.http.services.wp-datalitics.loadbalancer.server.port=3000"
+      - "traefik.http.services.wp-datalitics.loadbalancer.passHostHeader=true"
+      - "traefik.http.routers.wp-datalitics.service=wp-datalitics"
+      - "traefik.http.routers.wp-datalitics.rule=Host(`whatsapp.datalitics.com.br`) || Host(`wp.faleconosco.chat`) || Host(`wp.faleconosco.chat`) || Host(`whatsapp.datalitics.app`)"
+      - "traefik.http.routers.wp-datalitics.tls.certresolver=le"
+      - "traefik.http.routers.wp-datalitics.entrypoints=websecure"
+      - "traefik.http.routers.wp-datalitics.tls=true"
+
+      - "traefik.http.middlewares.api-retry.retry.attempts=3"
+      - "traefik.http.middlewares.api-retry.retry.initialinterval=100ms"
+      - "traefik.http.routers.wp-datalitics.middlewares=api-retry"
+networks:
+  externa:
+    external: true
+  interna:
+    external: true
